@@ -36,8 +36,6 @@ def slide_type_det(slide):
     return slide_type
 
 
-# TODO длительность видео
-
 def pptx_to_stories(pptx_path):
     result_dir = f'{os.path.splitext(pptx_path)[0]}-slides'
     pptx_name = os.path.basename(result_dir)
@@ -55,12 +53,18 @@ def pptx_to_stories(pptx_path):
     read_only = True
     has_title = False
     window = False
+    slides = 0
+    slides_total = len(save_as_video)
 
-    presentation = Application.Presentations.Open(pptx_path, read_only, has_title, window)
-    for n, as_video in enumerate(save_as_video):
-        if not as_video:
-            presentation.Slides[n].Export(f"{result_dir}\\{n:02}-{pptx_name}.png", "PNG")
-    presentation.Close()
+    if not all(save_as_video):
+        presentation = Application.Presentations.Open(pptx_path, read_only, has_title, window)
+        for n, as_video in enumerate(save_as_video):
+            if not as_video:
+                presentation.Slides[n].Export(f"{result_dir}\\{n:02}-{pptx_name}.png", "PNG")
+                slides += 1
+        presentation.Close()
+
+    print(f'completed: {slides} / {slides_total}')
 
     for n, as_video in enumerate(save_as_video):
         presentation = Application.Presentations.Open(pptx_path, read_only, has_title, window)
@@ -69,8 +73,11 @@ def pptx_to_stories(pptx_path):
                 if i != n:
                     presentation.Slides[i].Delete()
             presentation.CreateVideo(f"{result_dir}\\{n:02}-{pptx_name}.mp4", **SETTINGS_EXPORT[as_video])
+            time.sleep(2)
             while presentation.CreateVideoStatus == 1:
                 time.sleep(1)
+            slides += 1
+            print(f'completed: {slides} / {slides_total}')
         presentation.Close()
 
 
@@ -80,6 +87,6 @@ if __name__ == "__main__":
         pptx_path = sys.argv[1]
     else:
         print("example")
-        pptx_path = f'{os.getcwd()}\\example\\example.pptx'
+        pptx_path = f'{os.getcwd()}\\example\\example2.pptx'
     pptx_to_stories(pptx_path)
     print("ok")
